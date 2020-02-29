@@ -18,6 +18,7 @@ var (
 	openColorRegex  = regexp.MustCompile(`\[([a-zA-Z]*|#[0-9a-zA-Z]*)$`)
 	openRegionRegex = regexp.MustCompile(`\["[a-zA-Z0-9_,;: \-\.]*"?$`)
 	newLineRegex    = regexp.MustCompile(`\r?\n`)
+	maxInt          = 1<<31 - 1
 
 	// TabSize is the number of spaces with which a tab character will be replaced.
 	TabSize = 4
@@ -570,6 +571,35 @@ func (t *TextView) Write(p []byte) (n int, err error) {
 	t.index = nil
 
 	return len(p), nil
+}
+
+// GetWidth returns required width using given height
+func (t *TextView) GetWidth(height int) int {
+	// Find longest line
+	t.reindexBuffer(maxInt)
+	width := t.longestLine + t.paddingLeft + t.paddingRight
+	if t.border {
+		width += 2
+	}
+	t.index = nil
+	return width
+}
+
+// GetHeight returns required height using given width
+func (t *TextView) GetHeight(width int) int {
+	// Calculate inner width
+	if t.border {
+		width -= 2
+	}
+	width -= t.paddingLeft - t.paddingRight
+	t.reindexBuffer(width)
+	// Find needed hight
+	height := len(t.index) + t.paddingTop + t.paddingBottom
+	if t.border {
+		height += 2
+	}
+	t.index = nil
+	return height
 }
 
 // reindexBuffer re-indexes the buffer such that we can use it to easily draw

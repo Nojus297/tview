@@ -120,6 +120,115 @@ func (f *Flex) ResizeItem(p Primitive, fixedSize, proportion int) *Flex {
 	return f
 }
 
+// GetWidth returns required width using given height
+func (f *Flex) GetWidth(height int) int {
+	widh := 0
+	if f.direction == FlexColumn {
+		var proportionSum int
+		// Fraction of maximal size per proportion
+		size, prop := 0, 1
+		for _, item := range f.items {
+			if item.FixedSize > 0 {
+				widh += item.FixedSize
+			} else {
+				proportionSum += item.Proportion
+				if item.Item != nil {
+					w := item.Item.GetWidth(height)
+					if size*item.Proportion < prop*w {
+						size = w
+						prop = item.Proportion
+					}
+				}
+			}
+		}
+		widh += proportionSum * size / prop
+	} else {
+		f.iterateItems(height, func(size int, item *flexItem) {
+			if item.FixedSize > 0 {
+				if widh < item.FixedSize {
+					widh = item.FixedSize
+				}
+			} else if item.Item != nil {
+				w := item.Item.GetWidth(size)
+				if widh < w {
+					widh = w
+				}
+			}
+		})
+	}
+	if f.border {
+		widh += 2
+	}
+	return widh + f.paddingLeft + f.paddingRight
+}
+
+// GetHeight returns required height using given width
+func (f *Flex) GetHeight(width int) int {
+	height := 0
+	if f.direction == FlexRow {
+		var proportionSum int
+		// Fraction of maximal size per proportion
+		size, prop := 0, 1
+		for _, item := range f.items {
+			if item.FixedSize > 0 {
+				height += item.FixedSize
+			} else {
+				proportionSum += item.Proportion
+				if item.Item != nil {
+					h := item.Item.GetHeight(width)
+					if size*item.Proportion < prop*h {
+						size = h
+						prop = item.Proportion
+					}
+				}
+			}
+		}
+		height += proportionSum * size / prop
+	} else {
+		f.iterateItems(width, func(size int, item *flexItem) {
+			if item.FixedSize > 0 {
+				if height < item.FixedSize {
+					height = item.FixedSize
+				}
+			} else if item.Item != nil {
+				d := item.Item.GetHeight(size)
+				if height < d {
+					height = d
+				}
+			}
+		})
+	}
+	if f.border {
+		height += 2
+	}
+	return height + f.paddingTop + f.paddingBottom
+}
+
+// iterateItems iterates through the items, calculating size
+func (f *Flex) iterateItems(totalSize int, callback func(size int, item *flexItem)) {
+	var proportionSum int
+	for _, item := range f.items {
+		if item.FixedSize > 0 {
+			totalSize -= item.FixedSize
+		} else {
+			proportionSum += item.Proportion
+		}
+	}
+	for _, item := range f.items {
+		size := item.FixedSize
+		if size <= 0 {
+			if proportionSum > 0 {
+				size = totalSize * item.Proportion / proportionSum
+				totalSize -= size
+				proportionSum -= item.Proportion
+			} else {
+				size = 0
+			}
+		}
+		callback(size, item)
+	}
+}
+
 // Draw draws this primitive onto the screen.
 func (f *Flex) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)

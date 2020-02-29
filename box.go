@@ -88,6 +88,18 @@ func (b *Box) GetRect() (int, int, int, int) {
 	return b.x, b.y, b.width, b.height
 }
 
+// GetWidth returns required width using given height
+func (b *Box) GetWidth(height int) int {
+	// Just keeps default ratio
+	return int(float32(height) / 10 * 15)
+}
+
+// GetHeight returns required height using given width
+func (b *Box) GetHeight(width int) int {
+	// Just keeps default ratio
+	return int(float32(width) / 15 * 10)
+}
+
 // GetInnerRect returns the position of the inner rectangle (x, y, width,
 // height), without the border and without any padding. Width and height values
 // will clamp to 0 and thus never be negative.

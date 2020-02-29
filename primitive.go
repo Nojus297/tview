@@ -16,6 +16,12 @@ type Primitive interface {
 	// SetRect sets a new position of the primitive.
 	SetRect(x, y, width, height int)
 
+	// GetWidth returns required width using given height
+	GetWidth(height int) int
+
+	// GetHeight returns required height using given width
+	GetHeight(width int) int
+
 	// InputHandler returns a handler which receives key events when it has focus.
 	// It is called by the Application class.
 	//
